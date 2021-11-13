@@ -20,12 +20,12 @@ def price(s):
 
   return float(response['ask'])
 
-def get_candles(s, t="1day"):
+def get_candles(s, duration="1day"):
   # time-intervaled data for the provided symbol
 
   # make the actual request to the api
   try:
-    return requests.get(base_url + "v2/candles/{0}/{1}".format(s,t)).json()
+    return requests.get(base_url + "v2/candles/{0}/{1}".format(s,duration)).json()
 
   except:
     logging.critical("Can't talk to gemini API")
@@ -34,10 +34,10 @@ def pdev(s):
   # Price Deviation - Generate an alert if the current price is more than one standard deviation from the 24hr average
 
   # get data from the last 24hr
-  candles_data = get_candles(s, t="1day")
+  candles_data = get_candles(s, duration="1day")
 
   try:
-    all_closed_prices_from_duration = [ d[4]  for d in candles_data  ]
+    all_closed_prices_from_duration = [ data[4]  for data in candles_data  ]
 
     # using the std method to get standard deviation, ddof should give data in the 68% group
     std = np.std(all_closed_prices_from_duration, ddof=1)
@@ -54,7 +54,7 @@ def pchange(s, per):
 
     # grab last row, 2d column for the open price
     try:
-      last_open_price_from_range = candles_data[len(candles_data)-1][1]
+      last_open_price_from_range = candles_data[ len(candles_data) -1 ][1]
     except:
        logging.error('Parsing errror with price change function')
 
@@ -76,7 +76,7 @@ def volumechange(s, per):
        volume_sum = 0
 
        # sum up all volumes except first index
-       [ volume_sum := volume_sum + v[5] for v in candles_data[1:] ]
+       [ volume_sum := volume_sum + volume[5] for volume in candles_data[1:] ]
    except:
         logging.error('Parsing errror with volume change function')
 
@@ -97,26 +97,26 @@ if __name__ == '__main__':
    args = parser.parse_args()
 
    # get candles data for last 24hrs
-   candles_data = get_candles(args.symbol, t="1day")
+   candles_data = get_candles(args.symbol, duration="1day")
    # grabbing price and data before function calls to scale back on http requests
    price = price(args.symbol)
 
    # argparser is wierd with floats, so whatever is passed with -p will be converted to decimal
-   p = args.percentage * 0.01
+   percent = args.percentage * 0.01
 
    if args.type == "all":
      pdev(args.symbol)
-     pchange(args.symbol, p)
-     volumechange(args.symbol, p)
+     pchange(args.symbol, percent)
+     volumechange(args.symbol, percent)
 
    elif args.type == "pricedev":
      pdev(args.symbol)
 
    elif args.type == "pricechange":
-     pchange(args.symbol, p)
+     pchange(args.symbol, percent)
 
    elif args.type == "voldev":
-     volumechange(args.symbol, p)
+     volumechange(args.symbol, percent)
 
    else:
      logging.critical("Type unkown, please specify -t (pricedev,pricechange,voldev,all)")
