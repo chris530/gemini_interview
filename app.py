@@ -39,7 +39,10 @@ def pdev(s):
   try:
     all_closed_prices_from_duration = [ data[4]  for data in candles_data  ]
 
-    # using the std method to get standard deviation, ddof should give data in the 68% group
+    # using the std method to get standard deviation,
+    #
+    # not sure if they wanted the Absolute mean deviation,  which we can get by df.mad() instead
+
     std = np.std(all_closed_prices_from_duration, ddof=1)
 
   except:
